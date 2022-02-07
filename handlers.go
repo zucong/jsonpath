@@ -207,20 +207,20 @@ func (j *NewJsonpath) evalArrayElement(footprints []Footprint, node *ArrayElemen
 			indexes := make([]SelectionIndex, 0)
 			realSize := footprint.(ArrayFootprint).RealSize
 			i := -1
-			if node.Value >= 0 && node.Value <= len(arr)-1{
+			if node.Value >= 0 && node.Value <= len(arr)-1 {
 				i = node.Value
 			} else if node.Value >= -len(arr) {
 				i = node.Value + len(arr)
 			}
 
 			if i >= 0 && i < len(arr) {
-				indexes = append(indexes,SelectionIndex{
+				indexes = append(indexes, SelectionIndex{
 					Index: i,
 					VirtualInfo: VirtualInfo{
 						Virtual:  j.writeMode && i >= realSize,
 						RealSize: -1,
 					},
-				} )
+				})
 			}
 
 			result = append(result,
@@ -265,13 +265,13 @@ func (j *NewJsonpath) evalFilter(footprints []Footprint, node *FilterNode) ([]Fo
 	footprints = expandFootprints(footprints, false)
 	result := make([]Footprint, 0)
 	for _, fp := range footprints {
-
 		allSelectedFp, err := fp.SelectAll()
 		if err != nil {
 			return nil, err
 		}
 		elements, err := allSelectedFp.Expand()
 		for _, element := range elements {
+			element = element.LeaveItAsItIs()
 			lefts, err := j.evalList([]Footprint{element}, node.Left)
 			if node.Operator == "exists" {
 				if len(lefts) > 0 {
