@@ -382,6 +382,10 @@ func lt(arg1, arg2 interface{}) (bool, error) {
 			truth = v1.Int() < 0 || uint64(v1.Int()) < v2.Uint()
 		case k1 == uintKind && k2 == intKind:
 			truth = v2.Int() >= 0 && v1.Uint() < uint64(v2.Int())
+		case k1 == intKind && k2 == floatKind:
+			truth = float64(v1.Int()) <= v2.Float()
+		case k1 == floatKind && k2 == intKind:
+			truth = v1.Float() <= float64(v2.Int())
 		default:
 			return false, errBadComparison
 		}
