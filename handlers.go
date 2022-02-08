@@ -267,7 +267,7 @@ func (j *NewJsonpath) evalFilter(footprints []Footprint, node *FilterNode) ([]Fo
 	for _, fp := range footprints {
 		allSelectedFp, err := fp.SelectAll()
 		if err != nil {
-			return nil, err
+			continue
 		}
 		elements, err := allSelectedFp.Expand()
 		for _, element := range elements {
@@ -308,7 +308,7 @@ func (j *NewJsonpath) evalFilter(footprints []Footprint, node *FilterNode) ([]Fo
 
 			pass, err := genericCompare(node.Operator, left, right)
 			if err != nil {
-				return nil, err
+				j.AddWarning(err.Error())
 			}
 			if pass {
 				result = append(result, element)

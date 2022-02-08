@@ -495,12 +495,332 @@ func LoadReadCases(cases *map[string]JsonpathTest) {
 		data:        `{" a": 1, "a": 2, " a ": 3, "a ": 4, " 'a' ": 5, " 'a": 6, "a' ": 7, " \"a\" ": 8, "\"a\"": 9}`,
 		expectation: `[2]`,
 	}
+	m["Bracket notation with string including dot wildcard"] = JsonpathTest{
+		name:        "Bracket notation with string including dot wildcard",
+		expr:        `$['ni.*']`,
+		data:        `{"nice": 42, "ni.*": 1, "mice": 100}`,
+		expectation: `[1]`,
+	}
+	m["Bracket notation with two literals separated by dot"] = JsonpathTest{
+		name: "Bracket notation with two literals separated by dot",
+		expr: `$['two'.'some']`,
+		data: `
+{
+    "one": {"key": "value"},
+    "two": {"some": "more", "key": "other value"},
+    "two.some": "42",
+    "two'.'some": "43"
+}`,
+		expectation: `["43"]`,
+	}
+	m["Bracket notation with two literals separated by dot without quotes"] = JsonpathTest{
+		name: "Bracket notation with two literals separated by dot without quotes",
+		expr: `$[two.some]`,
+		data: `
+{
+    "one": {"key": "value"},
+    "two": {"some": "more", "key": "other value"},
+    "two.some": "42"
+}`,
+		isErrorCase: true,
+	}
+	m["Bracket notation with wildcard on array"] = JsonpathTest{
+		name: "Bracket notation with wildcard on array",
+		expr: `$[*]`,
+		data: `
+[
+    "string",
+    42,
+    {
+        "key": "value"
+    },
+    [0, 1]
+]`,
+		expectation: `["string",42,{"key":"value"},[0,1]]`,
+	}
+	m["Bracket notation with wildcard on empty array"] = JsonpathTest{
+		name:        "Bracket notation with wildcard on empty array",
+		expr:        `$[*]`,
+		data:        `[]`,
+		expectation: `[]`,
+	}
+	m["Bracket notation with wildcard on empty object"] = JsonpathTest{
+		name:        "Bracket notation with wildcard on empty object",
+		expr:        `$[*]`,
+		data:        `{}`,
+		expectation: `[]`,
+	}
+	m["Bracket notation with wildcard on null value array"] = JsonpathTest{
+		name:        "Bracket notation with wildcard on null value array",
+		expr:        `$[*]`,
+		data:        `[40,null,42]`,
+		expectation: `[40,null,42]`,
+	}
+	m["Bracket notation with wildcard on object"] = JsonpathTest{
+		name: "Bracket notation with wildcard on object",
+		expr: `$[*]`,
+		data: `
+{
+    "some": "string",
+    "int": 42,
+    "object": {
+        "key": "value"
+    },
+    "array": [0, 1]
+}`,
+		expectation: `[42,{"key":"value"},[0,1],"string"]`,
+	}
+	m["Bracket notation with wildcard after array slice"] = JsonpathTest{
+		name:        "Bracket notation with wildcard after array slice",
+		expr:        `$[0:2][*]`,
+		data:        `[[1, 2], ["a", "b"], [0, 0]]`,
+		expectation: `[1,2,"a","b"]`,
+	}
+	m["Bracket notation with wildcard after dot notation after bracket notation with wildcard"] = JsonpathTest{
+		name:        "Bracket notation with wildcard after dot notation after bracket notation with wildcard",
+		expr:        `$[*].bar[*]`,
+		data:        `[{"bar": [42]}]`,
+		expectation: `[42]`,
+	}
+	m["Bracket notation with wildcard after recursive descent"] = JsonpathTest{
+		name: "Bracket notation with wildcard after recursive descent",
+		expr: `$..[*]`,
+		data: `{
+    "key": "value",
+    "another key": {
+        "complex": "string",
+        "primitives": [0, 1]
+    }
+}`,
+		expectation: `["string","value",0,1,[0,1],{"complex":"string","primitives":[0,1]}]`,
+	}
+	m["Bracket notation without quotes"] = JsonpathTest{
+		name:        "Bracket notation without quotes",
+		expr:        `$[key]`,
+		data:        `{"key": "value"}`,
+		isErrorCase: true,
+	}
+	m["Current with dot notation"] = JsonpathTest{
+		name:        "Current with dot notation",
+		expr:        `@.a`,
+		data:        `{"a": 1}`,
+		expectation: `[1]`,
+	}
+	m["Dot bracket notation"] = JsonpathTest{
+		name:        "Dot bracket notation",
+		expr:        `$.['key']`,
+		data:        `{"key": "value","other": {"key": [{"key": 42}]}}`,
+		expectation: `[]`,
+	}
+	m["Dot bracket notation with double quotes"] = JsonpathTest{
+		name:        "Dot bracket notation with double quotes",
+		expr:        `$.["key"]`,
+		data:        `{"key": "value","other": {"key": [{"key": 42}]}}`,
+		expectation: `[]`,
+	}
+	m["Dot bracket notation without quotes"] = JsonpathTest{
+		name:        "Dot bracket notation without quotes",
+		expr:        `$.[key]`,
+		data:        `{"key": "value","other": {"key": [{"key": 42}]}}`,
+		isErrorCase: true,
+	}
+	m["Dot notation"] = JsonpathTest{
+		name:        "Dot notation",
+		expr:        `$.key`,
+		data:        `{"key": "value"}`,
+		expectation: `["value"]`,
+	}
+	m["Dot notation on array"] = JsonpathTest{
+		name:        "Dot notation on array",
+		expr:        `$.key`,
+		data:        `[0, 1]`,
+		isErrorCase: true,
+	}
+	m["Dot notation on array value"] = JsonpathTest{
+		name:        "Dot notation on array value",
+		expr:        `$.key`,
+		data:        `{"key": ["first", "second"]}`,
+		expectation: `[["first","second"]]`,
+	}
+	m["Dot notation on array with containing object matching key"] = JsonpathTest{
+		name:        "Dot notation on array with containing object matching key",
+		expr:        `$.id`,
+		data:        `[{"id": 2}]`,
+		isErrorCase: true,
+	}
+	m["Dot notation on empty object value"] = JsonpathTest{
+		name:        "Dot notation on empty object value",
+		expr:        `$.key`,
+		data:        `{"key": {}}`,
+		expectation: `[{}]`,
+	}
+	m["Dot notation on null value"] = JsonpathTest{
+		name:        "Dot notation on null value",
+		expr:        `$.key`,
+		data:        `{"key": null}`,
+		expectation: `[null]`,
+	}
+	m["Dot notation on object without key"] = JsonpathTest{
+		name:        "Dot notation on object without key",
+		expr:        `$.missing`,
+		data:        `{"key": "value"}`,
+		expectation: `[]`,
+	}
+	m["Dot notation after array slice"] = JsonpathTest{
+		name:        "Dot notation after array slice",
+		expr:        `$[0:2].key`,
+		data:        `[{"key": "ey"}, {"key": "bee"}, {"key": "see"}]`,
+		expectation: `["ey","bee"]`,
+	}
+	m["Dot notation after bracket notation after recursive descent"] = JsonpathTest{
+		name: "Dot notation after bracket notation after recursive descent",
+		expr: `$..[1].key`,
+		data: `
+{
+  "k": [{"key": "some value"}, {"key": 42}],
+  "kk": [[{"key": 100}, {"key": 200}, {"key": 300}], [{"key": 400}, {"key": 500}, {"key": 600}]],
+  "key": [0, 1]
+}`,
+		expectation: `[200,42,500]`,
+	}
+	m["Dot notation after bracket notation with wildcard"] = JsonpathTest{
+		name:        "Dot notation after bracket notation with wildcard",
+		expr:        `$[*].a`,
+		data:        `[{"a": 1},{"a": 1}]`,
+		expectation: `[1,1]`,
+	}
+	m["Dot notation after bracket notation with wildcard on one matching"] = JsonpathTest{
+		name:        "Dot notation after bracket notation with wildcard on one matching",
+		expr:        `$[*].a`,
+		data:        `[{"a": 1}]`,
+		expectation: `[1]`,
+	}
+	m["Dot notation after bracket notation with wildcard on some matching"] = JsonpathTest{
+		name:        "Dot notation after bracket notation with wildcard on some matching",
+		expr:        `$[*].a`,
+		data:        `[{"a": 1},{"b": 1}]`,
+		expectation: `[1]`,
+	}
+	m["Dot notation after filter expression"] = JsonpathTest{
+		name:        "Dot notation after filter expression",
+		expr:        `$[?(@.id==42)].name`,
+		data:        `[{"id": 42, "name": "forty-two"}, {"id": 1, "name": "one"}]`,
+		expectation: `["forty-two"]`,
+	}
+	m["Dot notation after recursive descent"] = JsonpathTest{
+		name: "Dot notation after recursive descent",
+		expr: `$..key`,
+		data: `
+{
+    "object": {
+        "key": "value",
+        "array": [
+            {"key": "something"},
+            {"key": {"key": "russian dolls"}}
+        ]
+    },
+    "key": "top"
+}`,
+		expectation: `["russian dolls","something","top","value",{"key":"russian dolls"}]`,
+	}
+	m["Dot notation after recursive descent after dot notation"] = JsonpathTest{
+		name: "Dot notation after recursive descent after dot notation",
+		expr: `$.store..price`,
+		data: `
+{
+  "store": {
+    "book": [
+      {
+        "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      {
+        "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      {
+        "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      {
+        "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      }
+    ],
+    "bicycle": {
+      "color": "red",
+      "price": 19.95
+    }
+  }
+}`,
+		expectation: `[12.99,19.95,22.99,8.95,8.99]`,
+	}
+	m["Dot notation after recursive descent with extra dot"] = JsonpathTest{
+		name: "Dot notation after recursive descent with extra dot",
+		expr: `$...key`,
+		data: `
+{
+    "object": {
+        "key": "value",
+        "array": [
+            {"key": "something"},
+            {"key": {"key": "russian dolls"}}
+        ]
+    },
+    "key": "top"
+}`,
+		expectation: `["russian dolls","something","top","value",{"key":"russian dolls"}]`,
+	}
+	m["Dot notation after union"] = JsonpathTest{
+		name:        "Dot notation after union",
+		expr:        `$[0,2].key`,
+		data:        `[{"key": "ey"}, {"key": "bee"}, {"key": "see"}]`,
+		expectation: `["ey","see"]`,
+	}
+	m["Dot notation after union with keys"] = JsonpathTest{
+		name: "Dot notation after union with keys",
+		expr: `$['one','three'].key`,
+		data: `
+{
+    "one": {"key": "value"},
+    "two": {"k": "v"},
+    "three": {"some": "more", "key": "other value"}
+}`,
+		expectation: `["value","other value"]`,
+	}
+	m["Dot notation with dash"] = JsonpathTest{
+		name: "Dot notation with dash",
+		expr: `$.key-dash`,
+		data: `
+{
+  "key": 42,
+  "key-": 43,
+  "-": 44,
+  "dash": 45,
+  "-dash": 46,
+  "": 47,
+  "key-dash": "value",
+  "something": "else"
+}`,
+		expectation: `["value"]`,
+	}
+
 }
 
 func TestGetFunction(t *testing.T) {
 	testCases := make(map[string]JsonpathTest, 0)
 	LoadReadCases(&testCases)
-	//testCases = map[string]JsonpathTest{"": testCases["Dot bracket notation"]}
+	//testCases = map[string]JsonpathTest{"": testCases["Filter expression with boolean and operator"]}
 	caseCount, failCount := 0, 0
 	for _, c := range testCases {
 		caseCount++

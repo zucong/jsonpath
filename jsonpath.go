@@ -50,6 +50,9 @@ func (j *NewJsonpath) FindResult() ([]Footprint, error) {
 	}
 
 	node := j.parser.Root.Nodes[0]
+	if node.(*ListNode).Nodes == nil {
+		return nil, fmt.Errorf("cannot handle empty expression")
+	}
 	footprints, err := j.evalList([]Footprint{selected}, node.(*ListNode))
 	if err != nil {
 		return nil, err

@@ -223,7 +223,7 @@ func (p *Parser) parseRecursive(cur *ListNode) error {
 	p.pos += len("..")
 	p.consumeText()
 	cur.append(newRecursive())
-	if r := p.peek(); isAlphaNumeric(r) {
+	if r := p.peek(); isAlphaNumeric(r) || r == '"' || r == '\'' || r == '*' {
 		return p.parseField(cur)
 	}
 	return p.parseInsideAction(cur)
