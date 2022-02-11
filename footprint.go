@@ -135,9 +135,8 @@ func (mfp MapFootprint) EnforceArraySelection(size int) error {
 
 		if _, ok := ref[s.Key].([]interface{}); ok {
 			s.RealSize = len(ref[s.Key].([]interface{}))
-			if size != -1 {
-				delta := size - len(ref[s.Key].([]interface{}))
-				arr := make([]interface{}, delta)
+			if size != -1 && s.RealSize < size {
+				arr := make([]interface{}, size-s.RealSize)
 				ref[s.Key] = append(ref[s.Key].([]interface{}), arr...)
 			}
 		} else if !ok {
@@ -261,9 +260,8 @@ func (afp ArrayFootprint) EnforceArraySelection(size int) error {
 
 		if _, ok := ref[s.Index].([]interface{}); ok {
 			s.RealSize = len(ref[s.Index].([]interface{}))
-			if size != -1 {
-				delta := size - len(ref[s.Index].([]interface{}))
-				arr := make([]interface{}, delta)
+			if size != -1 && s.RealSize < size {
+				arr := make([]interface{}, size-s.RealSize)
 				ref[s.Index] = append(ref[s.Index].([]interface{}), arr...)
 			}
 		} else if !ok {

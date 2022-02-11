@@ -1,10 +1,29 @@
 package jsonpath
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 )
 
-type NewJsonpath struct {
+func ConvertToJsonObj(jsonStr string) interface{} {
+	var err error
+	var jsonObj interface{}
+	// we should marshal the data and then unmarshal it so that we can get a generic json object
+	jsonStr = strings.TrimSpace(jsonStr)
+	if jsonStr[0] == '[' {
+		jsonObj = make(map[string]interface{}, 0)
+	} else {
+		jsonObj = make([]interface{}, 0)
+	}
+	err = json.Unmarshal([]byte(jsonStr), &jsonObj)
+	if err != nil {
+		panic(err)
+	}
+	return jsonObj
+}
+
+type Jsonpath struct {
 	name       string
 	parser     *Parser
 	writeMode  bool
@@ -12,8 +31,8 @@ type NewJsonpath struct {
 	warnings   []string
 }
 
-func New(name string, expr string) (*NewJsonpath, error) {
-	j := &NewJsonpath{
+func New(name string, expr string) (*Jsonpath, error) {
+	j := &Jsonpath{
 		name: name,
 	}
 	p, err := Parse(j.name, "{"+expr+"}")
@@ -24,19 +43,19 @@ func New(name string, expr string) (*NewJsonpath, error) {
 	return j, nil
 }
 
-func (j *NewJsonpath) AddWarning(warning string) {
+func (j *Jsonpath) AddWarning(warning string) {
 	j.warnings = append(j.warnings, warning)
 }
 
-func (j *NewJsonpath) InitData(obj interface{}) {
+func (j *Jsonpath) InitData(obj interface{}) {
 	j.dataHolder = append(j.dataHolder, obj)
 }
 
-func (j *NewJsonpath) Data() interface{} {
+func (j *Jsonpath) Data() interface{} {
 	return j.dataHolder[0]
 }
 
-func (j *NewJsonpath) FindResult() ([]Footprint, error) {
+func (j *Jsonpath) FindResult() ([]Footprint, error) {
 	if j.parser == nil {
 		return nil, fmt.Errorf("%s is an incomplete jsonpath expr", j.name)
 	}
@@ -60,7 +79,7 @@ func (j *NewJsonpath) FindResult() ([]Footprint, error) {
 	return footprints, nil
 }
 
-func (j *NewJsonpath) Get() ([]interface{}, error) {
+func (j *Jsonpath) Get() ([]interface{}, error) {
 	j.writeMode = false
 	footprints, err := j.FindResult()
 	if err != nil {
@@ -74,7 +93,7 @@ func (j *NewJsonpath) Get() ([]interface{}, error) {
 	return result, nil
 }
 
-func (j *NewJsonpath) Set(data *interface{}, change interface{}) error {
+func (j *Jsonpath) Set(change interface{}) error {
 	j.writeMode = true
 	footprints, err := j.FindResult()
 	if err != nil {
@@ -90,7 +109,7 @@ func (j *NewJsonpath) Set(data *interface{}, change interface{}) error {
 	return nil
 }
 
-func (j *NewJsonpath) walk(footprints []Footprint, node Node) ([]Footprint, error) {
+func (j *Jsonpath) walk(footprints []Footprint, node Node) ([]Footprint, error) {
 	switch node := node.(type) {
 	case *ListNode:
 		return j.evalList(footprints, node)

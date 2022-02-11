@@ -22,7 +22,7 @@ func expandFootprints(footprints []Footprint, remainUnexpandableFootprint bool) 
 	return result
 }
 
-func (j *NewJsonpath) evalList(footprints []Footprint, node *ListNode) ([]Footprint, error) {
+func (j *Jsonpath) evalList(footprints []Footprint, node *ListNode) ([]Footprint, error) {
 	var err error
 
 	for _, n := range node.Nodes {
@@ -34,7 +34,7 @@ func (j *NewJsonpath) evalList(footprints []Footprint, node *ListNode) ([]Footpr
 	return footprints, nil
 }
 
-func (j *NewJsonpath) evalField(footprints []Footprint, node *FieldNode) ([]Footprint, error) {
+func (j *Jsonpath) evalField(footprints []Footprint, node *FieldNode) ([]Footprint, error) {
 	if j.writeMode {
 		for _, footprint := range footprints {
 			err := footprint.EnforceObjectSelection()
@@ -76,7 +76,7 @@ func (j *NewJsonpath) evalField(footprints []Footprint, node *FieldNode) ([]Foot
 	return result, nil
 }
 
-func (j *NewJsonpath) inferArrayNode(arrPtr *[]interface{}, node *ArrayNode) (base, limit, step int, needInvert bool) {
+func (j *Jsonpath) inferArrayNode(arrPtr *[]interface{}, node *ArrayNode) (base, limit, step int, needInvert bool) {
 	arr := *arrPtr
 	if len(node.Params) == 1 {
 		return node.Params[0].Value, node.Params[0].Value + 1, 1, false
@@ -135,7 +135,7 @@ func (j *NewJsonpath) inferArrayNode(arrPtr *[]interface{}, node *ArrayNode) (ba
 	return
 }
 
-func (j *NewJsonpath) evalArray(footprints []Footprint, node *ArrayNode) ([]Footprint, error) {
+func (j *Jsonpath) evalArray(footprints []Footprint, node *ArrayNode) ([]Footprint, error) {
 	if j.writeMode {
 		for _, footprint := range footprints {
 			tail := 0
@@ -198,7 +198,20 @@ func (j *NewJsonpath) evalArray(footprints []Footprint, node *ArrayNode) ([]Foot
 	return result, nil
 }
 
-func (j *NewJsonpath) evalArrayElement(footprints []Footprint, node *ArrayElementNode) ([]Footprint, error) {
+func (j *Jsonpath) evalArrayElement(footprints []Footprint, node *ArrayElementNode) ([]Footprint, error) {
+	if j.writeMode {
+		if node.Value < 0 {
+			return nil, fmt.Errorf("cannot use a negative index in set mode")
+		} else if !node.Known {
+			return nil, fmt.Errorf("index unknown in set mode")
+		}
+		for _, footprint := range footprints {
+			err := footprint.EnforceArraySelection(node.Value + 1)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 	footprints = expandFootprints(footprints, false)
 	result := make([]Footprint, 0)
 	for _, footprint := range footprints {
@@ -236,7 +249,7 @@ func (j *NewJsonpath) evalArrayElement(footprints []Footprint, node *ArrayElemen
 	return result, nil
 }
 
-func (j *NewJsonpath) evalWildcard(footprints []Footprint, node *WildcardNode) ([]Footprint, error) {
+func (j *Jsonpath) evalWildcard(footprints []Footprint, node *WildcardNode) ([]Footprint, error) {
 	footprints = expandFootprints(footprints, false)
 	for i, footprint := range footprints {
 		selected, err := footprint.SelectAll()
@@ -249,7 +262,7 @@ func (j *NewJsonpath) evalWildcard(footprints []Footprint, node *WildcardNode) (
 	return footprints, nil
 }
 
-func (j *NewJsonpath) evalUnion(footprints []Footprint, node *UnionNode) ([]Footprint, error) {
+func (j *Jsonpath) evalUnion(footprints []Footprint, node *UnionNode) ([]Footprint, error) {
 	result := make([]Footprint, 0)
 	for _, n := range node.Nodes {
 		list, err := j.evalList(footprints, n)
@@ -261,7 +274,7 @@ func (j *NewJsonpath) evalUnion(footprints []Footprint, node *UnionNode) ([]Foot
 	return result, nil
 }
 
-func (j *NewJsonpath) evalFilter(footprints []Footprint, node *FilterNode) ([]Footprint, error) {
+func (j *Jsonpath) evalFilter(footprints []Footprint, node *FilterNode) ([]Footprint, error) {
 	footprints = expandFootprints(footprints, false)
 	result := make([]Footprint, 0)
 	for _, fp := range footprints {
@@ -343,7 +356,7 @@ func genericCompare(operator string, left interface{}, right interface{}) (bool,
 	return pass, nil
 }
 
-func (j *NewJsonpath) evalRecursive(footprints []Footprint, node *RecursiveNode) ([]Footprint, error) {
+func (j *Jsonpath) evalRecursive(footprints []Footprint, node *RecursiveNode) ([]Footprint, error) {
 	footprints = expandFootprints(footprints, false)
 	result := make([]Footprint, 0)
 	for _, footprint := range footprints {
@@ -364,7 +377,7 @@ func recursivelyCollectFootprint(footprint Footprint, result *[]Footprint) {
 	}
 }
 
-func (j *NewJsonpath) evalInt(footprints []Footprint, node *IntNode) ([]Footprint, error) {
+func (j *Jsonpath) evalInt(footprints []Footprint, node *IntNode) ([]Footprint, error) {
 	footprints = expandFootprints(footprints, false)
 	result := make([]Footprint, len(footprints))
 	for i, _ := range footprints {
@@ -374,7 +387,7 @@ func (j *NewJsonpath) evalInt(footprints []Footprint, node *IntNode) ([]Footprin
 	return result, nil
 }
 
-func (j *NewJsonpath) evalBool(footprints []Footprint, node *BoolNode) ([]Footprint, error) {
+func (j *Jsonpath) evalBool(footprints []Footprint, node *BoolNode) ([]Footprint, error) {
 	footprints = expandFootprints(footprints, false)
 	result := make([]Footprint, len(footprints))
 	for i, _ := range footprints {
@@ -384,7 +397,7 @@ func (j *NewJsonpath) evalBool(footprints []Footprint, node *BoolNode) ([]Footpr
 	return result, nil
 }
 
-func (j *NewJsonpath) evalFloat(footprints []Footprint, node *FloatNode) ([]Footprint, error) {
+func (j *Jsonpath) evalFloat(footprints []Footprint, node *FloatNode) ([]Footprint, error) {
 	footprints = expandFootprints(footprints, false)
 	result := make([]Footprint, len(footprints))
 	for i, _ := range footprints {
