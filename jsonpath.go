@@ -3,19 +3,12 @@ package jsonpath
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 )
 
 func ConvertToJsonObj(jsonStr string) interface{} {
 	var err error
 	var jsonObj interface{}
 	// we should marshal the data and then unmarshal it so that we can get a generic json object
-	jsonStr = strings.TrimSpace(jsonStr)
-	if jsonStr[0] == '[' {
-		jsonObj = make(map[string]interface{}, 0)
-	} else {
-		jsonObj = make([]interface{}, 0)
-	}
 	err = json.Unmarshal([]byte(jsonStr), &jsonObj)
 	if err != nil {
 		panic(err)
