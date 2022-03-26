@@ -2,7 +2,7 @@ package jsonpath
 
 import (
 	"fmt"
-	"jsonpath/template"
+	"github.com/zucong/jsonpath/template"
 	"log"
 )
 
